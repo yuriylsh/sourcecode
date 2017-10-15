@@ -1,4 +1,6 @@
-﻿using RabbitShared;
+﻿using System;
+using RabbitMQ.Client;
+using RabbitShared;
 
 namespace Consumer
 {
@@ -7,21 +9,24 @@ namespace Consumer
         static void Main()
         {
             var connection = RabbitConnectionSingleton.Get();
-            var channel = connection.CreateModel();
+            IModel channel = connection.CreateModel();
             AlertsExchangeFactory.DeclareAlertsExhange(channel);
             string criticalQueueName = QueueDeclarer.DeclareQueueCritical(channel);
             string rateLimitQueueName = QueueDeclarer.DeclareQueueRateLimit(channel);
 
             channel.BasicConsume(
-                criticalQueueName, 
-                autoAck: false, 
-                consumerTag: "critical",
-                consumer: new CriticalQueueConsumer());
+                criticalQueueName,
+                autoAck: false,
+                consumer: new CriticalQueueConsumer(channel),
+                consumerTag: "critical"
+            );
             channel.BasicConsume(
-                rateLimitQueueName, 
-                autoAck: false, 
-                consumerTag: "critical",
-                consumer: new RateLimitQueueConsumer());
+                rateLimitQueueName,
+                autoAck: false,
+                consumer: new RateLimitQueueConsumer(channel),
+                consumerTag: "rate_limit");
+
+            Console.WriteLine("Ready for alerts!");
         }
     }
 }
