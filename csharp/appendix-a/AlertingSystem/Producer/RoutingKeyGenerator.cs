@@ -10,6 +10,6 @@ namespace Producer
 
         public static string Generate() => GetRandomValue(Importances) + "." + GetRandomValue(Kinds);
 
-        private static string GetRandomValue(string[] values) => values[_random.Next(values.Length - 1)];
+        private static string GetRandomValue(string[] values) => values[_random.Next(values.Length)];
     }
 }

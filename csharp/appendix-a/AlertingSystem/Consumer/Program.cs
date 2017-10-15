@@ -9,10 +9,10 @@ namespace Consumer
         static void Main()
         {
             var connection = RabbitConnectionSingleton.Get();
-            IModel channel = connection.CreateModel();
+            var channel = connection.CreateModel();
             AlertsExchangeFactory.DeclareAlertsExhange(channel);
-            string criticalQueueName = QueueDeclarer.DeclareQueueCritical(channel);
-            string rateLimitQueueName = QueueDeclarer.DeclareQueueRateLimit(channel);
+            var criticalQueueName = QueueDeclarer.DeclareQueueCritical(channel);
+            var rateLimitQueueName = QueueDeclarer.DeclareQueueRateLimit(channel);
 
             channel.BasicConsume(
                 criticalQueueName,

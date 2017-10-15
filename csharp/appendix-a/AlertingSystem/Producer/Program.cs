@@ -8,12 +8,20 @@ namespace Producer
 {
     internal class Program
     {
+        private const string QuitMarker = "quit";
+
+        private static readonly IBasicProperties MessageProperties = new BasicProperties
+        {
+            ContentType = "text/plain",
+            Persistent = false
+        };
+
         static void Main()
         {
             var connection = RabbitConnectionSingleton.Get();
             var channel = connection.CreateModel();
             EnsureExchangeAndQueues(channel);
-            StartSendingMessages(channel);
+            ProcessMessagesFromUser(channel);
         }
 
         private static void EnsureExchangeAndQueues(IModel channel)
@@ -23,28 +31,28 @@ namespace Producer
             QueueDeclarer.DeclareQueueCritical(channel);
         }
 
-        private static void StartSendingMessages(IModel channel)
+        private static void ProcessMessagesFromUser(IModel channel)
         {
-            Console.WriteLine("Enter message ('quit' to exti):");
-            string userInput = Console.ReadLine();
-            bool shouldQuit = string.Equals("quit", userInput, StringComparison.OrdinalIgnoreCase);
-            if (!shouldQuit)
-            {
-                SendMessage(userInput, channel);
-                StartSendingMessages(channel);
-            }
+            var (message, quit) = GetMessageFromUser();
+            if (quit) return;
+
+            SendMessageToChannel(message, channel);
+            ProcessMessagesFromUser(channel);
         }
 
-        private static void SendMessage(string message, IModel channel)
+        private static (string Message, bool quit) GetMessageFromUser()
+        {
+            Console.WriteLine("Enter message ('{0}' to exit):", QuitMarker);
+            string userInput = Console.ReadLine();
+            return (userInput, string.Equals(QuitMarker, userInput, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private static void SendMessageToChannel(string message, IModel channel)
         {
             var routingKey = RoutingKeyGenerator.Generate();
-            IBasicProperties messageProperties = new BasicProperties
-            {
-                ContentType = "text/plain",
-                Persistent = false
-            };
+            
             Console.WriteLine("PUBLISHING MESSAGE: routing key = {0}, message body = {1}", routingKey, message);
-            channel.BasicPublish(AlertsExchangeFactory.ExchangeName, routingKey, basicProperties: messageProperties, body: Encoding.ASCII.GetBytes(message));
+            channel.BasicPublish(AlertsExchangeFactory.ExchangeName, routingKey, basicProperties: MessageProperties, body: Encoding.ASCII.GetBytes(message));
         }
     }
 }
