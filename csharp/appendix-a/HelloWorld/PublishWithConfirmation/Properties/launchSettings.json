@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "PublishWithConfirmation": {
+      "commandName": "Project",
+      "commandLineArgs": "\"this message should be confirmed!\""
+    }
+  }
+}

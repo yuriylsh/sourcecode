@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace HelloWorld.Shared
+﻿namespace HelloWorld.Shared
 {
     public static class Names
     {

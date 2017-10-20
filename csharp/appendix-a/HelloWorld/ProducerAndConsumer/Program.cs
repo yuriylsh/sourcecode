@@ -1,54 +1,35 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using HelloWorld.Shared;
 using RabbitMQ.Client;
-
 using static HelloWorld.Shared.Names;
 using static HelloWorld.Shared.ConnectionFactory;
 using static HelloWorld.Shared.ExchangeDeclarer;
 using static HelloWorld.Shared.QueueDeclarer;
-using static HelloWorld.Shared.Consumer;
 using static HelloWorld.Shared.MessageBuilder;
 
 namespace ProducerAndConsumer
 {
     internal class Program
     {
-        private static bool _shouldExitApp = false;
-
-        static async Task Main(string[] args)
+        static void Main(string[] args)
         {
             var connection = CreateConnection();
-            IModel channel = connection.CreateModel();
+            var channel = connection.CreateModel();
             DeclareExchange(channel);
             DeclareQueue(channel);
-            channel.QueueBind(QueueName, ExchangeName, RoutingKey, null);
-            
-            var (messageProperties, messageBody) = GetMessage(channel, GetMessageFromCommandLineArguments(args));
-            channel.BasicPublish(
-                ExchangeName,
-                RoutingKey,
-                basicProperties: messageProperties,
-                body: messageBody);
+            channel.QueueBind(QueueName, ExchangeName, RoutingKey, arguments: null);
 
-            ConsumeMessages(channel, () => _shouldExitApp = true);
-            await WaitForExit();
-        }
-
-        private static string GetMessageFromCommandLineArguments(string[] args)
-        {
-            if (args.Length == 0)
+            var commandLineArgs = CommandLineArgs.Parse(args);
+            var (messageProperties, messageBody) = GetMessage(channel, commandLineArgs.Message);
+            for (var i = 0; i < commandLineArgs.Count; i++)
             {
-                Console.WriteLine("Must supply message text.");
-                Environment.Exit(-1);
+                channel.BasicPublish(
+                    ExchangeName,
+                    RoutingKey,
+                    basicProperties: messageProperties,
+                    body: messageBody); 
             }
-            return args[0];
-        }
 
-        private static async Task WaitForExit()
-        {
-            var delay = TimeSpan.FromMilliseconds(500);
-            while (!_shouldExitApp) await Task.Delay(delay);
-            Environment.Exit(0);
+            Consumer.ConsumeMessages(channel);
         }
     }
 }

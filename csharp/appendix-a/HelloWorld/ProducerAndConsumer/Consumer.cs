@@ -1,13 +1,14 @@
 ﻿using System;
 using System.Text;
+using HelloWorld.Shared;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 
-namespace HelloWorld.Shared
+namespace ProducerAndConsumer
 {
-    public static class Consumer
+    internal static class Consumer
     {
-        public static void ConsumeMessages(IModel channel, Action onShouldExit)
+        public static void ConsumeMessages(IModel channel)
         {
             var consumer = new EventingBasicConsumer(channel);
             consumer.Received += OnMessageReceived;
@@ -17,17 +18,7 @@ namespace HelloWorld.Shared
             {
                 var receivingChannel = ((EventingBasicConsumer)sender).Model;
                 receivingChannel.BasicAck(deliveryArgs.DeliveryTag, multiple: false);
-
-                var message = Encoding.ASCII.GetString(deliveryArgs.Body);
-                if(string.Equals("quit", message, StringComparison.OrdinalIgnoreCase))
-                {
-                    receivingChannel.BasicCancel(deliveryArgs.ConsumerTag);
-                    onShouldExit();
-                }
-                else
-                {
-                    Console.WriteLine(message);
-                }
+                Console.WriteLine("Message {0}: {1}", deliveryArgs.DeliveryTag, Encoding.ASCII.GetString(deliveryArgs.Body));
             }
         }
     }
