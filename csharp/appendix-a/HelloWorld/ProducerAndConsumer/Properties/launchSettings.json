@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "ProducerAndConsumer": {
+      "commandName": "Project",
+      "commandLineArgs": "\"this is a message\""
+    }
+  }
+}
